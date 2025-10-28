@@ -32,13 +32,12 @@ class RNN(nn.Module):
     def forward(self, inputs):
         # obtain hidden layer representation
         _, hidden = self.rnn(inputs)
-        
-        # obtain output layer representations
-        output = self.W(hidden[-1])
-        
-        # obtain probability distribution
-        predicted_vector = self.softmax(output)
-        
+        # [to fill] obtain output layer representations
+        predicted_vector = self.W(hidden)
+        # [to fill] sum over output
+        predicted_vector = torch.sum(predicted_vector, dim=0)
+        # [to fill] obtain probability dist.
+        predicted_vector = self.softmax(predicted_vector)
         return predicted_vector
 
 
