@@ -19,3 +19,5 @@ One example on running the code:
 ``python rnn.py --hidden_dim 32 --epochs 10 ``
 ``--train_data training.json --val_data validation.json``
 
+the final implementation of the models is stored in the .ipynb file 
+
