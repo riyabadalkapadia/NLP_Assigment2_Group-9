@@ -14,10 +14,9 @@ from argparse import ArgumentParser
 import pickle
 
 unk = '<UNK>'
-# Consult the PyTorch documentation for information on the functions used below:
-# https://pytorch.org/docs/stable/torch.html
+
 class RNN(nn.Module):
-    def __init__(self, input_dim, h):  # Add relevant parameters
+    def __init__(self, input_dim, h): 
         super(RNN, self).__init__()
         self.h = h
         self.numOfLayer = 1
@@ -30,13 +29,9 @@ class RNN(nn.Module):
         return self.loss(predicted_vector, gold_label)
 
     def forward(self, inputs):
-        # obtain hidden layer representation
         _, hidden = self.rnn(inputs)
-        # [to fill] obtain output layer representations
         predicted_vector = self.W(hidden)
-        # [to fill] sum over output
         predicted_vector = torch.sum(predicted_vector, dim=0)
-        # [to fill] obtain probability dist.
         predicted_vector = self.softmax(predicted_vector)
         return predicted_vector
 
@@ -67,18 +62,10 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     print("========== Loading data ==========")
-    train_data, valid_data = load_data(args.train_data, args.val_data) # X_data is a list of pairs (document, y); y in {0,1,2,3,4}
-
-    # Think about the type of function that an RNN describes. To apply it, you will need to convert the text data into vector representations.
-    # Further, think about where the vectors will come from. There are 3 reasonable choices:
-    # 1) Randomly assign the input to vectors and learn better embeddings during training; see the PyTorch documentation for guidance
-    # 2) Assign the input to vectors using pretrained word embeddings. We recommend any of {Word2Vec, GloVe, FastText}. Then, you do not train/update these embeddings.
-    # 3) You do the same as 2) but you train (this is called fine-tuning) the pretrained embeddings further.
-    # Option 3 will be the most time consuming, so we do not recommend starting with this
+    train_data, valid_data = load_data(args.train_data, args.val_data)
 
     print("========== Vectorizing data ==========")
-    model = RNN(50, args.hidden_dim)  # Fill in parameters
-    # optimizer = optim.SGD(model.parameters(), lr=0.01, momentum=0.9)
+    model = RNN(50, args.hidden_dim)
     optimizer = optim.Adam(model.parameters(), lr=0.01)
     word_embedding = pickle.load(open('./word_embedding.pkl', 'rb'))
 
@@ -91,7 +78,6 @@ if __name__ == "__main__":
     while not stopping_condition:
         random.shuffle(train_data)
         model.train()
-        # You will need further code to operationalize training, ffnn.py may be helpful
         print("Training started for epoch {}".format(epoch + 1))
         train_data = train_data
         correct = 0
@@ -108,24 +94,18 @@ if __name__ == "__main__":
                 input_words, gold_label = train_data[minibatch_index * minibatch_size + example_index]
                 input_words = " ".join(input_words)
 
-                # Remove punctuation
                 input_words = input_words.translate(input_words.maketrans("", "", string.punctuation)).split()
 
-                # Look up word embedding dictionary
                 vectors = [word_embedding[i.lower()] if i.lower() in word_embedding.keys() else word_embedding['unk'] for i in input_words ]
 
-                # Transform the input into required shape
                 vectors = torch.tensor(vectors).view(len(vectors), 1, -1)
                 output = model(vectors)
 
-                # Get loss
                 example_loss = model.compute_Loss(output.view(1,-1), torch.tensor([gold_label]))
 
-                # Get predicted label
                 predicted_label = torch.argmax(output)
 
                 correct += int(predicted_label == gold_label)
-                # print(predicted_label, gold_label)
                 total += 1
                 if loss is None:
                     loss = example_loss
@@ -161,7 +141,7 @@ if __name__ == "__main__":
             predicted_label = torch.argmax(output)
             correct += int(predicted_label == gold_label)
             total += 1
-            # print(predicted_label, gold_label)
+    
         print("Validation completed for epoch {}".format(epoch + 1))
         print("Validation accuracy for epoch {}: {}".format(epoch + 1, correct / total))
         validation_accuracy = correct/total
@@ -175,13 +155,6 @@ if __name__ == "__main__":
             last_train_accuracy = trainning_accuracy
 
         epoch += 1
-        # stop after configured number of epochs to avoid an infinite loop
         if hasattr(args, 'epochs') and epoch >= args.epochs:
             print(f"Reached maximum epochs ({args.epochs}). Stopping training.")
             stopping_condition = True
-
-
-
-    # You may find it beneficial to keep track of training accuracy or training loss;
-
-    # Think about how to update the model and what this entails. Consider ffnn.py and the PyTorch documentation for guidance
